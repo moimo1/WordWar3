@@ -1,0 +1,13 @@
+//
+// Created by ASUS TUF F15 on 3/18/2026.
+//
+
+#ifndef UNTITLED1_WORDDICTIONARY_H
+#define UNTITLED1_WORDDICTIONARY_H
+
+
+class WordDictionary {
+};
+
+
+#endif //UNTITLED1_WORDDICTIONARY_H
