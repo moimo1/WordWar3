@@ -307,6 +307,17 @@ void UIManager::drawWaitingScreen() {
     
     drawPanel(cx - 250, cy - 100, 500, 200, "MATCHMAKING", 25);
     DrawText("Searching for a worthy opponent...", cx - MeasureText("Searching for a worthy opponent...", 20)/2, cy - 10, 20, MAROON);
+
+    Rectangle cancelRec = { cx - 100, cy + 40, 200, 40 };
+    Vector2 mouse = getLogicalMousePos();
+    bool hoverCancel = CheckCollisionPointRec(mouse, cancelRec);
+    DrawRectangleRounded(cancelRec, 0.2f, 5, hoverCancel ? LIGHTGRAY : GRAY);
+    DrawText("CANCEL", cx - MeasureText("CANCEL", 15)/2, cy + 52, 15, WHITE);
+
+    if (hoverCancel && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        networkClient->sendPacket(Packet{PacketType::CLIENT_CANCEL_MATCHMAKING, {}});
+        currentState = UIState::MAIN_MENU;
+    }
 }
 
 void UIManager::drawGameOverScreen() {

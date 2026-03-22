@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 #include <mutex>
-#include <queue>
+#include <list>
 #include <condition_variable>
 #include <nlohmann/json.hpp>
 #include <set>
@@ -16,6 +16,8 @@
 struct PlayerSession {
     std::shared_ptr<asio::ip::tcp::socket> socket;
     std::string username;
+    std::atomic<bool> isMatchmaking{false};
+    std::atomic<bool> matchStarted{false};
 };
 
 class Server {
@@ -27,7 +29,7 @@ private:
     std::mutex dbMutex;
 
     // MMO Matchmaking Infrastructure Arrays
-    std::queue<std::shared_ptr<PlayerSession>> matchmakingQueue;
+    std::list<std::shared_ptr<PlayerSession>> matchmakingQueue;
     std::mutex queueMutex;
     std::condition_variable queueCV;
 

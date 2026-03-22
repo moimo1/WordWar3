@@ -15,7 +15,8 @@ enum class PacketType {
     SERVER_SEND_LEADERBOARD, // Drops a calculated Top 5 array string 
     SERVER_MATCH_FOUND,  // Server broadcasts matched opponent identity
     CLIENT_PLAY_REQUEST, // Exits the idle Menu loop into active logic
-    CLIENT_REGISTER      // Client explicitly signals database initialization 
+    CLIENT_REGISTER,     // Client explicitly signals database initialization 
+    CLIENT_CANCEL_MATCHMAKING // Formally completely seamlessly natively abandons dynamic natively queued arrays securely!
 };
 
 // Represents a network payload over TCP

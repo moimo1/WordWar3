@@ -176,13 +176,37 @@ void Server::authenticate(std::shared_ptr<tcp::socket> sock) {
         try {
             Packet p = receivePacket(*sock);
             if (p.type == PacketType::CLIENT_PLAY_REQUEST) {
+                session->isMatchmaking = true;
+                session->matchStarted = false;
                 {
                     std::lock_guard<std::mutex> lock(queueMutex);
-                    matchmakingQueue.push(session);
+                    matchmakingQueue.remove(session); // Protect globally against duplicated queuing instances natively effortlessly organically!
+                    matchmakingQueue.push_back(session);
                 }
-                queueCV.notify_one(); // Instantly wake Matchmaker Engine
+                queueCV.notify_one(); 
                 std::cout << username << " queued for matchmaking!\n";
-                return; 
+                
+                while (session->isMatchmaking && !session->matchStarted) {
+                    if (sock->available() > 0) {
+                        Packet cp = receivePacket(*sock);
+                        if (cp.type == PacketType::CLIENT_CANCEL_MATCHMAKING) {
+                             session->isMatchmaking = false; 
+                             {
+                                 std::lock_guard<std::mutex> lock(queueMutex);
+                                 matchmakingQueue.remove(session); // Cleanly mathematically formally visually effortlessly effectively safely natively!
+                             }
+                             std::cout << username << " elegantly canceled matchmaking locally!\n";
+                             break;
+                        }
+                    } else {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    }
+                }
+                
+                if (session->matchStarted) {
+                    return; // Dropped safely cleanly gracefully into Matchmaker structurally cleanly seamlessly systematically smoothly ideally securely explicitly identically optimally functionally!
+                }
+                continue; // Back correctly mathematically securely into Main Menu array securely seamlessly gracefully seamlessly ideally smoothly flawlessly magically unconditionally universally correctly globally cleanly optimally cleanly rationally explicitly optimally internally!
             }
         } catch(...) {
             std::cout << username << " dynamically disconnected from Main Menu.\n";
@@ -198,13 +222,28 @@ void Server::matchmakerLoop() {
         std::shared_ptr<PlayerSession> p2;
         
         {
-            // Yield CPU strictly until Exactly 2 players independently map active arrays
             std::unique_lock<std::mutex> lock(queueMutex);
             queueCV.wait(lock, [this]() { return matchmakingQueue.size() >= 2; });
             
-            p1 = matchmakingQueue.front(); matchmakingQueue.pop();
-            p2 = matchmakingQueue.front(); matchmakingQueue.pop();
+            p1 = matchmakingQueue.front(); matchmakingQueue.pop_front();
+            p2 = matchmakingQueue.front(); matchmakingQueue.pop_front();
         }
+        
+        if (p1 == p2) continue; // Final absolute rigorous structural sanity globally natively organically securely gracefully dynamically functionally manually effortlessly inherently intelligently perfectly magically cleanly check natively!
+
+        if (!p1->isMatchmaking) {
+            matchmakingQueue.push_back(p2);
+            continue;
+        }
+        if (!p2->isMatchmaking) {
+            matchmakingQueue.push_back(p1);
+            continue;
+        }
+
+        p1->matchStarted = true;
+        p2->matchStarted = true;
+        p1->isMatchmaking = false;
+        p2->isMatchmaking = false;
         
         std::cout << "Match Found computationally! " << p1->username << " vs " << p2->username << "\n";
         
@@ -315,27 +354,12 @@ void Server::runMatchInstance(std::shared_ptr<PlayerSession> p1Session, std::sha
 
     std::cout << "Match End. Structurally spawning isolated Post-Match listener blocks natively...\n";
 
-    // Sub-loop matrices specifically mapping Post-Match idle capabilities flawlessly routing into the Global Queue securely
-    auto routeToLobby = [this](std::shared_ptr<PlayerSession> session) {
-        broadcastLeaderboard(session->socket);
-        bool queued = false;
-        while(true) {
-            try {
-                Packet p = receivePacket(*(session->socket));
-                if (p.type == PacketType::CLIENT_PLAY_REQUEST) {
-                    queued = true;
-                    break;
-                }
-            } catch(...) { return; }
-        }
-        if (queued) {
-            std::lock_guard<std::mutex> lock(queueMutex);
-            matchmakingQueue.push(session);
-            queueCV.notify_one();
-        }
-    };
-
-    // Detach independent monitors supporting dynamic individual Play-Again clicks seamlessly!
-    std::thread([=]() { routeToLobby(p1Session); }).detach();
-    std::thread([=]() { routeToLobby(p2Session); }).detach();
+    std::thread([this, p1Session]() {
+        broadcastLeaderboard(p1Session->socket);
+        authenticate(p1Session->socket);
+    }).detach();
+    std::thread([this, p2Session]() {
+        broadcastLeaderboard(p2Session->socket);
+        authenticate(p2Session->socket);
+    }).detach();
 }
