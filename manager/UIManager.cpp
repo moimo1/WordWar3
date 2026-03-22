@@ -4,7 +4,7 @@
 
 UIManager::UIManager(int width, int height, const std::string& title, Client* client) 
     : logicalWidth(width), logicalHeight(height), networkClient(client),
-      currentState(UIState::LOGIN), exitTriggered(false), typingPassword(false),
+      currentState(UIState::LOGIN), exitTriggered(false), typingPassword(false), waitingForTurn(false),
       playerHp(200), playerShield(0), playerMaxHp(200), 
       opponentHp(200), opponentShield(0), opponentMaxHp(200),
       opponentName("Opponent"), gameOverMessage("")
@@ -72,6 +72,7 @@ void UIManager::processNetworkPackets() {
         }
         else if (p.type == PacketType::SERVER_SEND_POOL) {
             currentState = UIState::BATTLE;
+            waitingForTurn = false; // Safely unlock keyboard logic explicitly!
             currentPool.clear();
             for (auto& jsonItem : p.payload) {
                 currentPool.push_back(Word::fromJson(jsonItem));
@@ -117,6 +118,8 @@ void UIManager::handleLoginInput() {
 }
 
 void UIManager::handleKeyboardInput() {
+    if (waitingForTurn) return; // Physically block Keyboard character arrays until Server clears the lock
+
     int key = GetCharPressed();
     while (key > 0) {
         if ((key > 32) && (key <= 125)) {
@@ -151,6 +154,8 @@ void UIManager::handleKeyboardInput() {
                 networkClient->sendPacket(Packet{PacketType::CLIENT_SUBMIT_TURN, payload});
                 combatLog.push_back("-> Turn submitted! Waiting for server...");
                 currentSentence.clear();
+                typingBuffer.clear();
+                waitingForTurn = true;
             }
         }
     }
@@ -576,12 +581,12 @@ void UIManager::drawSentenceBuilder() {
 
     Rectangle submitRec = { padding + sbWidth - 165, yOffset + sbHeight - 45, 150, 30 };
     Vector2 mouse = getLogicalMousePos();
-    bool hovered = CheckCollisionPointRec(mouse, submitRec);
+    bool hovered = CheckCollisionPointRec(mouse, submitRec) && !waitingForTurn;
     
-    DrawRectangleRounded(submitRec, 0.2f, 5, hovered ? LIME : GREEN);
-    DrawText("SUBMIT [ENTER]", submitRec.x + 10, submitRec.y + 7, 15, WHITE);
+    DrawRectangleRounded(submitRec, 0.2f, 5, waitingForTurn ? DARKGRAY : (hovered ? LIME : GREEN));
+    DrawText("SUBMIT [ENTER]", submitRec.x + 10, submitRec.y + 7, 15, waitingForTurn ? GRAY : WHITE);
 
-    if (hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    if (hovered && !waitingForTurn && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         if (!currentSentence.getWords().empty()) {
             nlohmann::json payload = nlohmann::json::array();
             for(const auto& w : currentSentence.getWords()) {
@@ -591,6 +596,7 @@ void UIManager::drawSentenceBuilder() {
             combatLog.push_back("-> Turn submitted! Waiting for server...");
             currentSentence.clear();
             typingBuffer.clear();
+            waitingForTurn = true; // Instantly lock keyboard
         }
     }
 }

@@ -225,8 +225,21 @@ void Server::runMatchInstance(std::shared_ptr<PlayerSession> p1Session, std::sha
 
     try {
         sendPacket(*sock1, Packet{PacketType::SERVER_MATCH_FOUND, {{"opponent", p2Session->username}, {"my_max_hp", p1.getMaxHp()}, {"opp_max_hp", p2.getMaxHp()}}});
-        sendPacket(*sock2, Packet{PacketType::SERVER_MATCH_FOUND, {{"opponent", p1Session->username}, {"my_max_hp", p2.getMaxHp()}, {"opp_max_hp", p1.getMaxHp()}}});
+    } catch (...) {
+        std::cout << p1.getName() << " was a dead connection! Aborting.\n";
+        try { sendPacket(*sock2, Packet{PacketType::GAME_OVER, "DRAW"}); } catch(...) {}
+        return;
+    }
 
+    try {
+        sendPacket(*sock2, Packet{PacketType::SERVER_MATCH_FOUND, {{"opponent", p1Session->username}, {"my_max_hp", p2.getMaxHp()}, {"opp_max_hp", p1.getMaxHp()}}});
+    } catch (...) {
+        std::cout << p2.getName() << " was a dead connection! Aborting.\n";
+        try { sendPacket(*sock1, Packet{PacketType::GAME_OVER, "DRAW"}); } catch(...) {}
+        return;
+    }
+
+    try {
         while (p1.getHp() > 0 && p2.getHp() > 0) {
             std::vector<Word> pool1 = dict.getRandomWords(12);
             std::vector<Word> pool2 = dict.getRandomWords(12);
@@ -295,6 +308,8 @@ void Server::runMatchInstance(std::shared_ptr<PlayerSession> p1Session, std::sha
 
     } catch (...) {
         std::cout << "Match abnormally terminated! Sockets lost actively connecting parameters!\n";
+        try { sendPacket(*sock1, Packet{PacketType::GAME_OVER, "VICTORY"}); } catch(...) {}
+        try { sendPacket(*sock2, Packet{PacketType::GAME_OVER, "VICTORY"}); } catch(...) {}
         return; 
     }
 

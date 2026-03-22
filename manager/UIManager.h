@@ -30,6 +30,7 @@ private:
     std::string authUsername;
     std::string authPassword;
     bool typingPassword; 
+    bool waitingForTurn; // Prevents spamming sentences after submission!
     std::string loginErrorMessage;
 
     std::vector<std::pair<std::string, int>> leaderboard;

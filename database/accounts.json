@@ -10,13 +10,13 @@
         "wins": 0
     },
     "mori": {
-        "losses": 0,
+        "losses": 2,
         "password": "mori",
         "wins": 0
     },
     "renz": {
         "losses": 0,
         "password": "renz",
-        "wins": 6
+        "wins": 8
     }
 }
