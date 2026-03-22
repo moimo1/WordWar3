@@ -82,4 +82,4 @@ add_executable(WordWar3_Client
     ${CORE_SOURCES}
 )
 target_link_libraries(WordWar3_Client PRIVATE raylib nlohmann_json::nlohmann_json wsock32 ws2_32)
-target_include_directories(WordWar3_Client PRIVATE ${asio_SOURCE_DIR}/asio/include)
+target_include_directories(WordWar3_Client PRIVATE ${asio_SOURCE_DIR}/asio/include ${raylib_SOURCE_DIR}/src)
