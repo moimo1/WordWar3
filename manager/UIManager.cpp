@@ -172,12 +172,12 @@ static void drawPanel(float x, float y, float width, float height, const char* t
 
 static Color getEffectColor(EffectType type) {
     switch(type) {
-        case EffectType::Damage: return Color{240, 90, 90, 255};   
-        case EffectType::Defense: return Color{90, 180, 240, 255};  
-        case EffectType::Heal: return Color{110, 220, 110, 255};    
-        case EffectType::Critical: return Color{240, 160, 60, 255}; 
-        case EffectType::Weaken: return Color{180, 110, 220, 255};  
-        case EffectType::Amplify: return Color{250, 220, 80, 255};  
+        case EffectType::Damage: return Color{240, 90, 90, 255}; // red
+        case EffectType::Defense: return Color{90, 180, 240, 255};  // blue
+        case EffectType::Heal: return Color{110, 220, 110, 255};    // green
+        case EffectType::Critical: return Color{240, 160, 60, 255}; // orange
+        case EffectType::Weaken: return Color{180, 110, 220, 255};  // violet
+        case EffectType::Amplify: return Color{250, 220, 80, 255};  // yellow
         default: return LIGHTGRAY;
     }
 }

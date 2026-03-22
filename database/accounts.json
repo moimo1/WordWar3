@@ -12,10 +12,10 @@
     "mori": {
         "losses": 2,
         "password": "mori",
-        "wins": 0
+        "wins": 1
     },
     "renz": {
-        "losses": 0,
+        "losses": 1,
         "password": "renz",
         "wins": 8
     }
