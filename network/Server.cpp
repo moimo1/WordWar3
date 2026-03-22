@@ -21,11 +21,14 @@ void Server::sendPacket(tcp::socket& socket, const Packet& packet) {
 }
 
 Packet Server::receivePacket(tcp::socket& socket) {
-    asio::streambuf buffer;
-    asio::read_until(socket, buffer, '\n');
-    std::istream is(&buffer);
     std::string line;
-    std::getline(is, line);
+    char c = 0;
+    while (true) {
+        asio::read(socket, asio::buffer(&c, 1));
+        if (c == '\n') break;
+        line += c;
+    }
+    if (!line.empty() && line.back() == '\r') line.pop_back();
     return Packet::parse(line);
 }
 

@@ -44,18 +44,22 @@ void Client::sendPacket(const Packet& packet) {
     }
 }
 
+Packet Client::receivePacket(asio::ip::tcp::socket& socket) {
+    std::string line;
+    char c = 0;
+    while (true) {
+        asio::read(socket, asio::buffer(&c, 1));
+        if (c == '\n') break;
+        line += c;
+    }
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    return Packet::parse(line);
+}
+
 void Client::listenLoop() {
     while (isRunning) {
         try {
-            asio::streambuf buffer;
-            // Blocks quietly in the background until the server drops a newline \n packet
-            asio::read_until(socket, buffer, '\n');
-            
-            std::istream is(&buffer);
-            std::string line;
-            std::getline(is, line);
-            
-            Packet received = Packet::parse(line);
+            Packet received = receivePacket(socket);
 
             // Safely lock the mailbox and drop the message in for the GUI
             std::lock_guard<std::mutex> lock(inboxMutex);

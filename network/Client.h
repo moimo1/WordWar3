@@ -34,6 +34,7 @@ public:
 
     bool connectToServer(const std::string& ip, short port);
     
+    Packet receivePacket(asio::ip::tcp::socket& socket);
     // GUI safely calls this to send data
     void sendPacket(const Packet& packet);
 

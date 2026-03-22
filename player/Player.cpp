@@ -8,6 +8,7 @@ Player::Player(const std::string& name, int startHp)
 
 const std::string& Player::getName() const { return name; }
 int Player::getHp() const { return hp; }
+int Player::getMaxHp() const { return maxHp; }
 int Player::getShield() const { return shield; }
 
 void Player::takeDamage(int amount) {
