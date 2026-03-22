@@ -186,7 +186,7 @@ void UIManager::drawLoginScreen() {
     float cx = logicalWidth / 2.0f;
     float cy = logicalHeight / 2.0f;
     
-    drawPanel(cx - 200, cy - 150, 400, 300, "WORDWAR3 TERMINAL", 25);
+    drawPanel(cx - 200, cy - 150, 400, 300, "WORD WAR Z", 25);
     
     DrawText("USERNAME", cx - 180, cy - 80, 15, DARKGRAY);
     Rectangle uRec = { cx - 180, cy - 60, 360, 40 };
