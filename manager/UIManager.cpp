@@ -5,6 +5,7 @@
 UIManager::UIManager(int width, int height, const std::string& title, Client* client) 
     : logicalWidth(width), logicalHeight(height), networkClient(client),
       currentState(UIState::LOGIN), exitTriggered(false), typingPassword(false), waitingForTurn(false),
+      lastCombatLogSize(0), combatLogScrollOffset(0.0f),
       playerHp(200), playerShield(0), playerMaxHp(200), 
       opponentHp(200), opponentShield(0), opponentMaxHp(200),
       opponentName("Opponent"), gameOverMessage("")
@@ -544,13 +545,40 @@ void UIManager::drawCombatLog() {
     float yOffset = 140.0f;
     float clWidth = logicalWidth * 0.45f;
     float clHeight = 520.0f;
-    drawPanel(logicalWidth - padding - clWidth, yOffset, clWidth, clHeight, "Combat Log", 25);
+    Rectangle logRec = { logicalWidth - padding - clWidth, yOffset, clWidth, clHeight };
+    
+    drawPanel(logRec.x, logRec.y, logRec.width, logRec.height, "Combat Log", 25);
 
-    float ly = yOffset + 50;
-    for (size_t i = std::max(0, (int)combatLog.size() - 22); i < combatLog.size(); ++i) {
-        drawRichText(combatLog[i], logicalWidth - padding - clWidth + 15, ly, 15, authUsername, opponentName);
-        ly += 20;
+    int fontSize = 24;
+    float lineHeight = 35.0f;
+    float drawableHeight = clHeight - 60.0f;
+    float totalContentHeight = combatLog.size() * lineHeight;
+
+    // Auto-scroll natively unconditionally gracefully if array dynamically grows identical
+    if (combatLog.size() > lastCombatLogSize) {
+        combatLogScrollOffset = totalContentHeight - drawableHeight;
+        lastCombatLogSize = combatLog.size();
     }
+
+    Vector2 mousePos = getLogicalMousePos();
+    if (CheckCollisionPointRec(mousePos, logRec)) {
+        combatLogScrollOffset -= GetMouseWheelMove() * 40.0f;
+    }
+
+    float maxScroll = std::max(0.0f, totalContentHeight - drawableHeight);
+    if (combatLogScrollOffset < 0) combatLogScrollOffset = 0;
+    if (combatLogScrollOffset > maxScroll) combatLogScrollOffset = maxScroll;
+
+    BeginScissorMode((int)logRec.x, (int)(logRec.y + 50), (int)logRec.width, (int)drawableHeight);
+    float ly = logRec.y + 50 - combatLogScrollOffset;
+    
+    for (size_t i = 0; i < combatLog.size(); ++i) {
+        if (ly + lineHeight > logRec.y + 50 && ly < logRec.y + 50 + drawableHeight) {
+            drawRichText(combatLog[i], logRec.x + 15, ly, fontSize, authUsername, opponentName);
+        }
+        ly += lineHeight;
+    }
+    EndScissorMode();
 }
 
 void UIManager::drawSentenceBuilder() {

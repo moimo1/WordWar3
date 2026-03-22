@@ -39,6 +39,8 @@ private:
     Sentence currentSentence;
     std::string typingBuffer;
     std::vector<std::string> combatLog;
+    int lastCombatLogSize;
+    float combatLogScrollOffset;
     int playerHp, playerShield, playerMaxHp;
     int opponentHp, opponentShield, opponentMaxHp;
     std::string opponentName;
