@@ -5,7 +5,7 @@
         "wins": 0
     },
     "lance": {
-        "losses": 5,
+        "losses": 6,
         "password": "lance",
         "wins": 0
     },
@@ -17,6 +17,6 @@
     "renz": {
         "losses": 0,
         "password": "renz",
-        "wins": 5
+        "wins": 6
     }
 }

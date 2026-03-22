@@ -214,15 +214,15 @@ void Server::matchmakerLoop() {
 
 void Server::runMatchInstance(std::shared_ptr<PlayerSession> p1Session, std::shared_ptr<PlayerSession> p2Session) {
     WordDictionary dict("../database/words.json");
-    Player p1(p1Session->username, 10);
-    Player p2(p2Session->username, 10);
+    Player p1(p1Session->username, 200);
+    Player p2(p2Session->username, 200);
 
     auto sock1 = p1Session->socket;
     auto sock2 = p2Session->socket;
 
     try {
-        sendPacket(*sock1, Packet{PacketType::SERVER_MATCH_FOUND, {{"opponent", p2Session->username}, {"my_max_hp", 10}, {"opp_max_hp", 10}}});
-        sendPacket(*sock2, Packet{PacketType::SERVER_MATCH_FOUND, {{"opponent", p1Session->username}, {"my_max_hp", 10}, {"opp_max_hp", 10}}});
+        sendPacket(*sock1, Packet{PacketType::SERVER_MATCH_FOUND, {{"opponent", p2Session->username}, {"my_max_hp", p1.getMaxHp()}, {"opp_max_hp", p2.getMaxHp()}}});
+        sendPacket(*sock2, Packet{PacketType::SERVER_MATCH_FOUND, {{"opponent", p1Session->username}, {"my_max_hp", p2.getMaxHp()}, {"opp_max_hp", p1.getMaxHp()}}});
 
         while (p1.getHp() > 0 && p2.getHp() > 0) {
             std::vector<Word> pool1 = dict.getRandomWords(12);

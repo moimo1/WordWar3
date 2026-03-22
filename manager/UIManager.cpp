@@ -5,8 +5,8 @@
 UIManager::UIManager(int width, int height, const std::string& title, Client* client) 
     : logicalWidth(width), logicalHeight(height), networkClient(client),
       currentState(UIState::LOGIN), exitTriggered(false), typingPassword(false),
-      playerHp(10), playerShield(0), playerMaxHp(10), 
-      opponentHp(10), opponentShield(0), opponentMaxHp(10),
+      playerHp(200), playerShield(0), playerMaxHp(200), 
+      opponentHp(200), opponentShield(0), opponentMaxHp(200),
       opponentName("Opponent"), gameOverMessage("")
 {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
@@ -64,6 +64,10 @@ void UIManager::processNetworkPackets() {
             if (p.payload.contains("my_max_hp")) {
                 playerMaxHp = p.payload["my_max_hp"].get<int>();
                 opponentMaxHp = p.payload["opp_max_hp"].get<int>();
+                playerHp = playerMaxHp;
+                opponentHp = opponentMaxHp;
+                playerShield = 0;
+                opponentShield = 0;
             }
         }
         else if (p.type == PacketType::SERVER_SEND_POOL) {

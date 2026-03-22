@@ -8,7 +8,7 @@
 int main(int argc, char* argv[]) {
     std::cout << "Starting WordWar3 CLIENT...\n";
     
-    std::string ip = "127.0.0.1";
+    std::string ip = "26.197.235.25";
     std::ifstream cfg("server_ip.txt");
     if (cfg.is_open()) {
         std::getline(cfg, ip);
