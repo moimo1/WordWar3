@@ -1,0 +1,22 @@
+{
+    "joron": {
+        "losses": 0,
+        "password": "joron",
+        "wins": 0
+    },
+    "lance": {
+        "losses": 5,
+        "password": "lance",
+        "wins": 0
+    },
+    "mori": {
+        "losses": 0,
+        "password": "mori",
+        "wins": 0
+    },
+    "renz": {
+        "losses": 0,
+        "password": "renz",
+        "wins": 5
+    }
+}

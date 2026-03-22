@@ -2,13 +2,16 @@
 #define UNTITLED1_PLAYER_H
 
 #include <string>
+#include <vector>
 #include "Sentence.h"
 
 class Player {
 private:
     std::string name;
     int hp;
+    int maxHp;
     int shield;
+    int maxShield;
 
 public:
     Player(const std::string& name, int startHp);
@@ -21,7 +24,7 @@ public:
     void addShield(int amount);
     void reduceShield(int amount);
 
-    void applySentenceEffects(const Sentence& sentence, Player& opponent);
+    std::vector<std::string> applySentenceEffects(const Sentence& sentence, Player& opponent);
     void displayStatus() const;
 };
 
