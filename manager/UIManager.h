@@ -1,13 +1,27 @@
-//
-// Created by ASUS TUF F15 on 3/18/2026.
-//
+#ifndef UIMANAGER_H
+#define UIMANAGER_H
 
-#ifndef UNTITLED1_UIMANAGER_H
-#define UNTITLED1_UIMANAGER_H
-
+#include "raylib.h"
+#include <string>
 
 class UIManager {
+private:
+    int logicalWidth;
+    int logicalHeight;
+    RenderTexture2D target;
+
+    // Helper functions for drawing layout sections
+    void drawTopPanel();
+    void drawWordPool();
+    void drawCombatLog();
+    void drawSentenceBuilder();
+
+public:
+    UIManager(int width, int height, const std::string& title);
+    ~UIManager();
+
+    void updateAndDraw();
+    bool shouldClose() const;
 };
 
-
-#endif //UNTITLED1_UIMANAGER_H
+#endif // UIMANAGER_H

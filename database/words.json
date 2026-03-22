@@ -1,0 +1,10 @@
+{
+  "Noun": ["knight", "dragon", "wizard", "shield", "sword", "cleric", "assassin", "king", "arrow", "castle"],
+  "Verb": ["strikes", "heals", "defends", "curses", "charges", "pierces", "runs", "blocks", "attacks"],
+  "Adjective": ["strong", "magic", "holy", "fierce", "heavy", "ancient", "quick", "dark", "bright"],
+  "Adverb": ["rapidly", "bravely", "brutally", "quietly", "swiftly", "suddenly", "calmly"],
+  "Article": ["The", "A", "An"],
+  "Pronoun": ["He", "She", "It", "They", "We", "I", "You"],
+  "Preposition": ["with", "against", "towards", "upon", "behind", "above"],
+  "Conjunction": ["and", "but", "or", "because", "although"]
+}
