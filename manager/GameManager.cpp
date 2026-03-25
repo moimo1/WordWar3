@@ -1,6 +1,8 @@
 #include "GameManager.h"
 #include <iostream>
 #include "../word/WordDictionary.h"
+#include <chrono>
+#include <thread>
 
 using namespace nlohmann;
 
@@ -36,18 +38,25 @@ GameManager::GameManager(std::shared_ptr<PlayerSession> p1, std::shared_ptr<Play
 // Compares a submitted sentence mathematically against the active formulas to calculate raw magic payload impacts explicitly
 void GameManager::processTurn(std::shared_ptr<asio::ip::tcp::socket> attackerSock, std::shared_ptr<asio::ip::tcp::socket> defenderSock, Player& attacker, Player& defender, const Sentence& sent) {
     std::string sig = sent.getPatternSignature();
+    std::string fullText = "";
+    for (const auto& w : sent.getWords()) fullText += w.getText() + " ";
+    if (!fullText.empty()) fullText.pop_back();
+
     if (validFormulas.contains(sig)) {
-        Server::sendPacket(*attackerSock, Packet{PacketType::SERVER_LOG_MESSAGE, "Valid Syntax! [" + sig + "] Attack lands!"});
-        Server::sendPacket(*defenderSock, Packet{PacketType::SERVER_LOG_MESSAGE, "Opponent attacked successfully!"});
+        Server::sendPacket(*attackerSock, Packet{PacketType::SERVER_LOG_MESSAGE, "VALID SYNTAX [" + sig + "]: You cast '" + fullText + "'"});
+        Server::sendPacket(*defenderSock, Packet{PacketType::SERVER_LOG_MESSAGE, "DANGER: " + attacker.getName() + " cast '" + fullText + "'!"});
+        std::this_thread::sleep_for(std::chrono::milliseconds(800));
         
         std::vector<std::string> logs = attacker.applySentenceEffects(sent, defender);
         for (const auto& logMsg : logs) {
             Server::sendPacket(*attackerSock, Packet{PacketType::SERVER_LOG_MESSAGE, logMsg});
             Server::sendPacket(*defenderSock, Packet{PacketType::SERVER_LOG_MESSAGE, logMsg});
+            std::this_thread::sleep_for(std::chrono::milliseconds(600));
         }
     } else {
-        Server::sendPacket(*attackerSock, Packet{PacketType::SERVER_LOG_MESSAGE, "Invalid Grammar! [" + sig + "] Attack FIZZLED!"});
-        Server::sendPacket(*defenderSock, Packet{PacketType::SERVER_LOG_MESSAGE, "Opponent mumbled gibberish. Nothing happens."});
+        Server::sendPacket(*attackerSock, Packet{PacketType::SERVER_LOG_MESSAGE, "INVALID GRAMMAR [" + sig + "]: Your attack completely FIZZLED!"});
+        Server::sendPacket(*defenderSock, Packet{PacketType::SERVER_LOG_MESSAGE, attacker.getName() + " mumbled gibberish! Their attack failed."});
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
 
@@ -99,19 +108,26 @@ int GameManager::runMatch() {
             int len1 = sent1.getWords().size();
             int len2 = sent2.getWords().size();
 
+            Server::sendPacket(*sock1, Packet{PacketType::SERVER_LOG_MESSAGE, "======================================="});
+            Server::sendPacket(*sock2, Packet{PacketType::SERVER_LOG_MESSAGE, "======================================="});
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
             if (len1 < len2) {
                 Server::sendPacket(*sock1, Packet{PacketType::SERVER_LOG_MESSAGE, "-> INITIATIVE! Your combo was tighter ("+std::to_string(len1)+" vs "+std::to_string(len2)+"). You strike first!"});
                 Server::sendPacket(*sock2, Packet{PacketType::SERVER_LOG_MESSAGE, "-> OUTSPED! Opponent's fast combo strikes first!"});
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 processTurn(sock1, sock2, p1, p2, sent1);
                 if (p2.getHp() > 0) processTurn(sock2, sock1, p2, p1, sent2);
             } else if (len2 < len1) {
                 Server::sendPacket(*sock2, Packet{PacketType::SERVER_LOG_MESSAGE, "-> INITIATIVE! Your combo was tighter ("+std::to_string(len2)+" vs "+std::to_string(len1)+"). You strike first!"});
                 Server::sendPacket(*sock1, Packet{PacketType::SERVER_LOG_MESSAGE, "-> OUTSPED! Opponent's fast combo strikes first!"});
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 processTurn(sock2, sock1, p2, p1, sent2);
                 if (p1.getHp() > 0) processTurn(sock1, sock2, p1, p2, sent1);
             } else {
                 Server::sendPacket(*sock1, Packet{PacketType::SERVER_LOG_MESSAGE, "-> CLASH! Perfect mirrors. Simultaneous strike!"});
                 Server::sendPacket(*sock2, Packet{PacketType::SERVER_LOG_MESSAGE, "-> CLASH! Perfect mirrors. Simultaneous strike!"});
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 processTurn(sock1, sock2, p1, p2, sent1);
                 processTurn(sock2, sock1, p2, p1, sent2);
             }

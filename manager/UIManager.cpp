@@ -550,6 +550,8 @@ static void drawRichText(const std::string& text, float startX, float startY, in
         else if (word.find("weakened") != std::string::npos) c = Color{180, 110, 220, 255};
         else if (word.find("CRITICAL") != std::string::npos) c = Color{240, 160, 60, 255};
         else if (word.find("COMBO!") != std::string::npos) c = GOLD;
+        else if (word.find("INVALID") != std::string::npos || word.find("FIZZLED") != std::string::npos) c = GRAY;
+        else if (!word.empty() && word[0] >= '0' && word[0] <= '9') c = Color{255, 200, 50, 255}; // Highlight raw numerical payload math structurally vibrantly!
 
         // Render distinct token string mapped physically along dynamic cursor X
         DrawText(word.c_str(), currentX, startY, fontSize, c);
