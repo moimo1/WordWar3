@@ -456,6 +456,25 @@ void UIManager::drawWordPool() {
     float wpHeight = 350.0f;
     drawPanel(padding, yOffset, wpWidth, wpHeight, "Word Pool (Type words from here)", 20);
 
+    // Draw Dynamic Color Legend
+    int legX = padding + 15;
+    int legY = yOffset + 30;
+    DrawText("LEGEND: ", legX, legY, 12, DARKGRAY); legX += 55;
+    
+    auto drawLegItem = [&](const char* text, EffectType type) {
+        Color c = getEffectColor(type);
+        DrawRectangleRounded({(float)legX, (float)legY + 1, 10, 10}, 0.2f, 5, c);
+        DrawText(text, legX + 15, legY, 12, DARKGRAY);
+        legX += MeasureText(text, 12) + 25;
+    };
+    
+    drawLegItem("Damage", EffectType::Damage);
+    drawLegItem("Defense", EffectType::Defense);
+    drawLegItem("Heal", EffectType::Heal);
+    drawLegItem("Critical", EffectType::Critical);
+    drawLegItem("Weaken", EffectType::Weaken);
+    drawLegItem("Amplify", EffectType::Amplify);
+
     // Group words into categorical columns for visual UX efficiency
     std::vector<Word> colSubjects, colActions, colModifiers, colConnectors;
     for (const auto& w : currentPool) {
@@ -474,8 +493,8 @@ void UIManager::drawWordPool() {
     }
 
     auto drawColumn = [&](const std::vector<Word>& col, float startX, const char* title) {
-        DrawText(title, startX, yOffset + 35, 15, DARKGRAY);
-        float currentY = yOffset + 60;
+        DrawText(title, startX, yOffset + 50, 15, DARKGRAY);
+        float currentY = yOffset + 75;
         for (const auto& w : col) {
             std::string label = w.getText();
             int nameWidth = MeasureText(label.c_str(), 15);
