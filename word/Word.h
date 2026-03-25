@@ -22,7 +22,6 @@ public:
     PartOfSpeech getPartOfSpeech() const;
     const Effect& getEffect() const;
 
-    // Networking serialization capabilities
     nlohmann::json toJson() const;
     static Word fromJson(const nlohmann::json& j);
 };
