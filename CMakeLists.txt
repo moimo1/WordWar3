@@ -61,6 +61,8 @@ add_executable(WordWar3_Server
     network/Server.cpp
     network/Server.h
     network/Packet.h
+    manager/GameManager.cpp
+    manager/GameManager.h
     ${CORE_SOURCES}
 )
 # We explicitly link Ws2_32 on Windows since basic sockets require it internally
