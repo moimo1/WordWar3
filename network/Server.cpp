@@ -9,14 +9,17 @@ using asio::ip::tcp;
 
 std::mutex dbMutex;
 
+// Initializes the server on the specified TCP port
 Server::Server(short port) : io_context(), acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {
 }
 
+// Converts a Packet object into JSON and sends it physically over the socket
 void Server::sendPacket(tcp::socket& socket, const Packet& packet) {
     std::string data = packet.dump();
     asio::write(socket, asio::buffer(data));
 }
 
+// Reads raw streaming data from the socket until a newline, then rebuilds a Packet from the JSON string
 Packet Server::receivePacket(tcp::socket& socket) {
     std::string line;
     char c = 0;
@@ -40,12 +43,15 @@ void Server::loadDatabase() {
     }
 }
 
+// Safely flushes the current server RAM memory back to accounts.json on the hard drive
 void Server::saveDatabase() {
+    std::lock_guard<std::mutex> lock(dbMutex);
     std::ofstream outFile("../database/accounts.json");
     outFile << accountsDb.dump(4);
     outFile.close();
 }
 
+// Calculates the Top 5 players mathematically by Win ratio and pushes the list to a Client's UI lobby
 void Server::broadcastLeaderboard(std::shared_ptr<tcp::socket> sock) {
     std::vector<std::pair<std::string, int>> leaders;
     {
@@ -65,6 +71,7 @@ void Server::broadcastLeaderboard(std::shared_ptr<tcp::socket> sock) {
     sendPacket(*sock, Packet{PacketType::SERVER_SEND_LEADERBOARD, ldb});
 }
 
+// Safely blocks RAM and natively adds +1 Win and +1 Loss to the correct player accounts immediately after a match
 void Server::recordMatchResult(const std::string& p1Name, const std::string& p2Name, bool p1Won, bool p2Won) {
     std::lock_guard<std::mutex> lock(dbMutex);
     if (p1Won && !p2Won) {
@@ -77,6 +84,7 @@ void Server::recordMatchResult(const std::string& p1Name, const std::string& p2N
     saveDatabase();
 }
 
+// The master sequence that boots up the overarching matchmaking algorithm threads and the raw incoming connection acceptor
 void Server::run() {
     std::cout << "===== WORDWAR3 SERVER ENGINES ONLINE =====\n";
     std::cout << "Listening on Port " << acceptor.local_endpoint().port() << "...\n";
@@ -88,6 +96,7 @@ void Server::run() {
     acceptorLoop(); 
 }
 
+// Infinite loop strictly dedicated to listening for brand new physical TCP port pings
 void Server::acceptorLoop() {
     std::cout << "Global TCP Acceptor Matrix Active. Supporting dynamic MMO connections...\n";
     while (true) {
@@ -102,6 +111,7 @@ void Server::acceptorLoop() {
     }
 }
 
+// The isolated "Lobby" layer that securely processes Login or Registration credentials for an unverified player
 void Server::authenticate(std::shared_ptr<tcp::socket> sock) {
     std::string username;
     while (true) {
@@ -159,7 +169,7 @@ void Server::authenticate(std::shared_ptr<tcp::socket> sock) {
                 session->matchStarted = false;
                 {
                     std::lock_guard<std::mutex> lock(queueMutex);
-                    matchmakingQueue.remove(session); // Protect globally against duplicated queuing instances natively effortlessly organically!
+                    matchmakingQueue.remove(session);
                     matchmakingQueue.push_back(session);
                 }
                 queueCV.notify_one(); 
@@ -194,6 +204,7 @@ void Server::authenticate(std::shared_ptr<tcp::socket> sock) {
     }
 }
 
+// Infinite background watcher that instantly grabs exactly 2 waiting players from the queue and isolates them natively into a GameManager combat thread
 void Server::matchmakerLoop() {
     std::cout << "Matchmaker thread natively tracking Lobby arrays...\n";
     while (true) {

@@ -4,6 +4,7 @@
 
 using namespace nlohmann;
 
+// Constructs the active GameManager class and natively builds the entire map of authorized grammar structures
 GameManager::GameManager(std::shared_ptr<PlayerSession> p1, std::shared_ptr<PlayerSession> p2) : p1Session(p1), p2Session(p2) {
     validFormulas = {
         // Base
@@ -32,6 +33,7 @@ GameManager::GameManager(std::shared_ptr<PlayerSession> p1, std::shared_ptr<Play
     };
 }
 
+// Compares a submitted sentence mathematically against the active formulas to calculate raw magic payload impacts explicitly
 void GameManager::processTurn(std::shared_ptr<asio::ip::tcp::socket> attackerSock, std::shared_ptr<asio::ip::tcp::socket> defenderSock, Player& attacker, Player& defender, const Sentence& sent) {
     std::string sig = sent.getPatternSignature();
     if (validFormulas.contains(sig)) {
@@ -49,6 +51,7 @@ void GameManager::processTurn(std::shared_ptr<asio::ip::tcp::socket> attackerSoc
     }
 }
 
+// The core, infinitely spinning physical 1v1 Combat Engine dynamically pushing 12-word pools seamlessly and checking player HP bounds
 int GameManager::runMatch() {
     WordDictionary dict("../database/words.json");
     Player p1(p1Session->username, 200);
