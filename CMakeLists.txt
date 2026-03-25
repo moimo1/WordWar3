@@ -78,8 +78,6 @@ add_executable(WordWar3_Client
     network/Client.h
     manager/UIManager.cpp
     manager/UIManager.h
-    manager/GameManager.cpp
-    manager/GameManager.h
     ${CORE_SOURCES}
 )
 target_link_libraries(WordWar3_Client PRIVATE raylib nlohmann_json::nlohmann_json wsock32 ws2_32)
