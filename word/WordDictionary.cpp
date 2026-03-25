@@ -8,14 +8,13 @@
 using json = nlohmann::json;
 
 WordDictionary::WordDictionary(const std::string& jsonFilePath) {
-    // 1. Open the JSON file
     std::ifstream file(jsonFilePath);
     if (!file.is_open()) {
         std::cerr << "Failed to open database file: " << jsonFilePath << "\n";
         return;
     }
 
-    // 2. Parse it using the nlohmann library
+    // Parse
     json dbJson;
     try {
         file >> dbJson;
@@ -24,7 +23,7 @@ WordDictionary::WordDictionary(const std::string& jsonFilePath) {
         return;
     }
 
-    // 3. Populate our memory map
+    // Populate our memory map
     for (auto& el : dbJson.items()) {
         PartOfSpeech pos = stringToPOS(el.key());
         
@@ -77,7 +76,7 @@ std::vector<Word> WordDictionary::getRandomWords(int count) const {
     std::vector<std::pair<std::string, PartOfSpeech>> verbs;
     std::vector<std::pair<std::string, PartOfSpeech>> poolRest;
 
-    // 1. Sort the database out into pools so we can guarantee core grammatical minimums
+    // Sort the database out into pools so we can guarantee core grammatical minimums
     for (const auto& [pos, strList] : categorizedWords) {
         for (const std::string& str : strList) {
             if (pos == PartOfSpeech::Noun || pos == PartOfSpeech::Pronoun) {

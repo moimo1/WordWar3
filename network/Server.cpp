@@ -237,7 +237,7 @@ void Server::matchmakerLoop() {
         
         std::cout << "Match Found computationally! " << p1->username << " vs " << p2->username << "\n";
         
-        // Spawn entirely isolated GameManager structural matrix naturally!
+        // Spawn entirely isolated GameManager structural matrix naturally
         std::thread([this, p1, p2]() {
             std::cout << "Initializing internal GameManager structurally natively for " << p1->username << " and " << p2->username << "...\n";
             GameManager game(p1, p2);

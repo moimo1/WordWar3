@@ -145,7 +145,15 @@ void UIManager::handleKeyboardInput() {
                     break;
                 }
             }
-            typingBuffer.clear();
+            
+            if (found) {
+                typingBuffer.clear();
+            } else if (IsKeyPressed(KEY_SPACE)) {
+                typingBuffer += " "; // Natively allow multi-word connectors physically!
+            } else if (IsKeyPressed(KEY_ENTER)) {
+                typingBuffer.clear(); // Clear the syntax buffer gracefully if they hard-submit a typo
+            }
+            
         } else if (IsKeyPressed(KEY_ENTER)) { 
             if (!currentSentence.getWords().empty()) {
                 nlohmann::json payload = nlohmann::json::array();
@@ -525,23 +533,38 @@ void UIManager::drawWordPool() {
     drawColumn(colConnectors, padding + 15 + cWidth * 3, "Connectors");
 }
 
-static void drawRichText(const std::string& text, float startX, float startY, int fontSize, const std::string& authUsername, const std::string& opponentName) {
+static float MeasureRichLineHeight(const std::string& text, float maxWidth, int fontSize) {
+    float currentX = 0;
+    float lines = 1;
+    std::stringstream ss(text);
+    std::string word;
+    while (ss >> word) {
+        float wW = MeasureText(word.c_str(), fontSize);
+        if (currentX + wW > maxWidth && currentX > 0) {
+            currentX = 0;
+            lines++;
+        }
+        currentX += wW + MeasureText(" ", fontSize);
+    }
+    return lines * (fontSize + 10);
+}
+
+static float drawRichText(const std::string& text, float startX, float startY, float maxWidth, int fontSize, const std::string& authUsername, const std::string& opponentName) {
     Color baseColor = DARKGRAY;
     
-    // Globally isolate Base Color using Player string validations!
-    if (text.find("SYSTEM") == 0 || text.find("Turn") == 0 || text.find("->") == 0 || text.find("Valid") == 0 || text.find("Invalid") == 0) {
+    if (text.find("SYSTEM") == 0 || text.find("Turn") == 0 || text.find("->") == 0 || text.find("Valid") == 0 || text.find("Invalid") == 0 || text.find("=") == 0) {
         baseColor = GRAY;
     } else if (!authUsername.empty() && (text.find(authUsername) == 0 || text.find("Opponent mumbled") != std::string::npos)) {
-        baseColor = Color{100, 150, 255, 255}; // Player blue
+        baseColor = Color{100, 150, 255, 255}; 
     } else if (!opponentName.empty() && (text.find(opponentName) == 0 || text.find("Opponent attacked") != std::string::npos)) {
-        baseColor = Color{255, 100, 100, 255}; // Enemy ref
+        baseColor = Color{255, 100, 100, 255}; 
     }
 
     float currentX = startX;
+    float currentY = startY;
     std::stringstream ss(text);
     std::string word;
     
-    // Mathematically tokenize the line string by blank spaces, projecting independent RGB bounds over targeted tokens sequentially
     while (ss >> word) {
         Color c = baseColor;
         if (word.find("damage") != std::string::npos) c = Color{240, 90, 90, 255};
@@ -551,14 +574,18 @@ static void drawRichText(const std::string& text, float startX, float startY, in
         else if (word.find("CRITICAL") != std::string::npos) c = Color{240, 160, 60, 255};
         else if (word.find("COMBO!") != std::string::npos) c = GOLD;
         else if (word.find("INVALID") != std::string::npos || word.find("FIZZLED") != std::string::npos) c = GRAY;
-        else if (!word.empty() && word[0] >= '0' && word[0] <= '9') c = Color{255, 200, 50, 255}; // Highlight raw numerical payload math structurally vibrantly!
+        else if (!word.empty() && word[0] >= '0' && word[0] <= '9') c = Color{255, 200, 50, 255}; 
 
-        // Render distinct token string mapped physically along dynamic cursor X
-        DrawText(word.c_str(), currentX, startY, fontSize, c);
-        
-        // Progress X cursor via exact Token dimensional length combined with logical gap Width natively calculated via the physics vector bounds
-        currentX += MeasureText(word.c_str(), fontSize) + MeasureText(" ", fontSize);
+        float wW = MeasureText(word.c_str(), fontSize);
+        if (currentX + wW > startX + maxWidth && currentX > startX) {
+            currentX = startX;
+            currentY += fontSize + 10;
+        }
+
+        DrawText(word.c_str(), currentX, currentY, fontSize, c);
+        currentX += wW + MeasureText(" ", fontSize);
     }
+    return (currentY - startY) + fontSize + 10;
 }
 
 void UIManager::drawCombatLog() {
@@ -570,14 +597,19 @@ void UIManager::drawCombatLog() {
     
     drawPanel(logRec.x, logRec.y, logRec.width, logRec.height, "Combat Log", 25);
 
-    int fontSize = 24;
-    float lineHeight = 35.0f;
+    int fontSize = 20;
     float drawableHeight = clHeight - 60.0f;
-    float totalContentHeight = combatLog.size() * lineHeight;
+    
+    std::vector<float> lineHeights;
+    float totalContentHeight = 0.0f;
+    for (const auto& log : combatLog) {
+        float h = MeasureRichLineHeight(log, logRec.width - 30, fontSize);
+        lineHeights.push_back(h);
+        totalContentHeight += h;
+    }
 
-    // Auto-scroll natively unconditionally gracefully if array dynamically grows identical
     if (combatLog.size() > lastCombatLogSize) {
-        combatLogScrollOffset = totalContentHeight - drawableHeight;
+        combatLogScrollOffset = std::max(0.0f, totalContentHeight - drawableHeight);
         lastCombatLogSize = combatLog.size();
     }
 
@@ -594,10 +626,11 @@ void UIManager::drawCombatLog() {
     float ly = logRec.y + 50 - combatLogScrollOffset;
     
     for (size_t i = 0; i < combatLog.size(); ++i) {
-        if (ly + lineHeight > logRec.y + 50 && ly < logRec.y + 50 + drawableHeight) {
-            drawRichText(combatLog[i], logRec.x + 15, ly, fontSize, authUsername, opponentName);
+        float h = lineHeights[i];
+        if (ly + h > logRec.y + 50 && ly < logRec.y + 50 + drawableHeight) {
+            drawRichText(combatLog[i], logRec.x + 15, ly, logRec.width - 30, fontSize, authUsername, opponentName);
         }
-        ly += lineHeight;
+        ly += h;
     }
     EndScissorMode();
 }
@@ -610,6 +643,7 @@ void UIManager::drawSentenceBuilder() {
     drawPanel(padding, yOffset, sbWidth, sbHeight, "Sentence Builder", 20);
 
     float cursorX = padding + 15;
+    float currentY = yOffset + 40;
     
     for (const Word& w : currentSentence.getWords()) {
         std::string label = w.getText();
@@ -619,12 +653,17 @@ void UIManager::drawSentenceBuilder() {
         int badgeWidth = MeasureText(valStr.c_str(), 15) + 10;
         int btnWidth = nameWidth + badgeWidth + 20;
         
-        Rectangle btnRec = { cursorX, yOffset + 40, (float)btnWidth, 35 };
+        if (cursorX + btnWidth > padding + sbWidth - 15) {
+            cursorX = padding + 15;
+            currentY += 45; // Dynamically physically logically structurally wrap the UI block to the next line!
+        }
+
+        Rectangle btnRec = { cursorX, currentY, (float)btnWidth, 35 };
         Color boxColor = getEffectColor(w.getEffect().getType());
         DrawRectangleRounded(btnRec, 0.2f, 5, boxColor);
-        DrawText(label.c_str(), cursorX + 10, yOffset + 48, 20, BLACK);
+        DrawText(label.c_str(), cursorX + 10, currentY + 8, 20, BLACK);
         
-        Rectangle badgeRec = { cursorX + btnWidth - badgeWidth - 5, yOffset + 45, (float)badgeWidth, 25 };
+        Rectangle badgeRec = { cursorX + btnWidth - badgeWidth - 5, currentY + 5, (float)badgeWidth, 25 };
         DrawRectangleRounded(badgeRec, 0.5f, 5, Color{0, 0, 0, 60});
         DrawText(valStr.c_str(), badgeRec.x + 5, badgeRec.y + 5, 15, WHITE);
         
@@ -633,10 +672,16 @@ void UIManager::drawSentenceBuilder() {
 
     if (!currentSentence.getWords().empty()) cursorX += 10;
 
-    DrawText(typingBuffer.c_str(), cursorX, yOffset + 48, 20, MAROON);
+    int typeBuffWidth = MeasureText(typingBuffer.c_str(), 20) + 15;
+    if (cursorX + typeBuffWidth > padding + sbWidth - 15) {
+        cursorX = padding + 15;
+        currentY += 45;
+    }
+
+    DrawText(typingBuffer.c_str(), cursorX, currentY + 8, 20, MAROON);
     
     if ((int)(GetTime() * 2) % 2 == 0) {
-        DrawText("_", cursorX + MeasureText(typingBuffer.c_str(), 20), yOffset + 48, 20, MAROON);
+        DrawText("_", cursorX + MeasureText(typingBuffer.c_str(), 20), currentY + 8, 20, MAROON);
     }
 
     Rectangle submitRec = { padding + sbWidth - 165, yOffset + sbHeight - 45, 150, 30 };
