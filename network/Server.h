@@ -26,7 +26,7 @@ private:
     asio::ip::tcp::acceptor acceptor;
 
     nlohmann::json accountsDb;
-    std::mutex dbMutex;
+    std::recursive_mutex dbMutex;
 
     // MMO Matchmaking Infrastructure Arrays
     std::list<std::shared_ptr<PlayerSession>> matchmakingQueue;

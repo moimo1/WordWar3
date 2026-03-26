@@ -1,4 +1,9 @@
 {
+    "adria": {
+        "losses": 0,
+        "password": "adria",
+        "wins": 0
+    },
     "joron": {
         "losses": 0,
         "password": "joron",

@@ -7,8 +7,6 @@
 using namespace nlohmann;
 using asio::ip::tcp;
 
-std::mutex dbMutex;
-
 // Initializes the server on the specified TCP port
 Server::Server(short port) : io_context(), acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {
 }
@@ -45,7 +43,7 @@ void Server::loadDatabase() {
 
 // Safely flushes the current server RAM memory back to accounts.json on the hard drive
 void Server::saveDatabase() {
-    std::lock_guard<std::mutex> lock(dbMutex);
+    std::lock_guard<std::recursive_mutex> lock(dbMutex);
     std::ofstream outFile("../database/accounts.json");
     outFile << accountsDb.dump(4);
     outFile.close();
@@ -55,7 +53,7 @@ void Server::saveDatabase() {
 void Server::broadcastLeaderboard(std::shared_ptr<tcp::socket> sock) {
     std::vector<std::pair<std::string, int>> leaders;
     {
-        std::lock_guard<std::mutex> lock(dbMutex);
+        std::lock_guard<std::recursive_mutex> lock(dbMutex);
         for (auto& el : accountsDb.items()) {
             leaders.push_back({el.key(), el.value()["wins"]});
         }
@@ -73,7 +71,7 @@ void Server::broadcastLeaderboard(std::shared_ptr<tcp::socket> sock) {
 
 // Safely blocks RAM and natively adds +1 Win and +1 Loss to the correct player accounts immediately after a match
 void Server::recordMatchResult(const std::string& p1Name, const std::string& p2Name, bool p1Won, bool p2Won) {
-    std::lock_guard<std::mutex> lock(dbMutex);
+    std::lock_guard<std::recursive_mutex> lock(dbMutex);
     if (p1Won && !p2Won) {
         accountsDb[p1Name]["wins"] = (int)accountsDb[p1Name]["wins"] + 1;
         accountsDb[p2Name]["losses"] = (int)accountsDb[p2Name]["losses"] + 1;
@@ -121,7 +119,7 @@ void Server::authenticate(std::shared_ptr<tcp::socket> sock) {
                 std::string user = p.payload["username"];
                 std::string pass = p.payload["password"];
                 
-                std::lock_guard<std::mutex> lock(dbMutex);
+                std::lock_guard<std::recursive_mutex> lock(dbMutex);
                 if (accountsDb.contains(user)) {
                     if (accountsDb[user]["password"] == pass) {
                         username = user;
@@ -137,7 +135,7 @@ void Server::authenticate(std::shared_ptr<tcp::socket> sock) {
                 std::string user = p.payload["username"];
                 std::string pass = p.payload["password"];
                 
-                std::lock_guard<std::mutex> lock(dbMutex);
+                std::lock_guard<std::recursive_mutex> lock(dbMutex);
                 if (accountsDb.contains(user)) {
                     sendPacket(*sock, Packet{PacketType::SERVER_LOGIN_RESPONSE, {{"success", false}, {"msg", "Username already taken!"}}});
                 } else {
