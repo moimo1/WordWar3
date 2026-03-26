@@ -43,6 +43,7 @@ private:
     void acceptorLoop();
     void matchmakerLoop();
     void authenticate(std::shared_ptr<asio::ip::tcp::socket> sock);
+    void sessionMenuLoop(std::shared_ptr<PlayerSession> session);
 
 public:
     Server(short port);

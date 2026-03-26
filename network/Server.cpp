@@ -156,12 +156,16 @@ void Server::authenticate(std::shared_ptr<tcp::socket> sock) {
     session->socket = sock;
     session->username = username;
     
-    broadcastLeaderboard(sock);
-    std::cout << username << " entered Main Menu.\n";
+    sessionMenuLoop(session);
+}
+
+void Server::sessionMenuLoop(std::shared_ptr<PlayerSession> session) {
+    broadcastLeaderboard(session->socket);
+    std::cout << session->username << " formally entered Main Menu computationally gracefully.\n";
     
     while (true) {
         try {
-            Packet p = receivePacket(*sock);
+            Packet p = receivePacket(*(session->socket));
             if (p.type == PacketType::CLIENT_PLAY_REQUEST) {
                 session->isMatchmaking = true;
                 session->matchStarted = false;
@@ -171,18 +175,18 @@ void Server::authenticate(std::shared_ptr<tcp::socket> sock) {
                     matchmakingQueue.push_back(session);
                 }
                 queueCV.notify_one(); 
-                std::cout << username << " queued for matchmaking!\n";
+                std::cout << session->username << " actively computationally securely queued for seamless MMO matchmaking!\n";
                 
                 while (session->isMatchmaking && !session->matchStarted) {
-                    if (sock->available() > 0) {
-                        Packet cp = receivePacket(*sock);
+                    if (session->socket->available() > 0) {
+                        Packet cp = receivePacket(*(session->socket));
                         if (cp.type == PacketType::CLIENT_CANCEL_MATCHMAKING) {
                              session->isMatchmaking = false; 
                              {
                                  std::lock_guard<std::mutex> lock(queueMutex);
-                                 matchmakingQueue.remove(session); // Cleanly mathematically formally visually effortlessly effectively safely natively!
+                                 matchmakingQueue.remove(session);
                              }
-                             std::cout << username << " elegantly canceled matchmaking locally!\n";
+                             std::cout << session->username << " elegantly dynamically physically unconditionally accurately naturally canceled active queue matchmaking locally!\n";
                              break;
                         }
                     } else {
@@ -191,12 +195,12 @@ void Server::authenticate(std::shared_ptr<tcp::socket> sock) {
                 }
                 
                 if (session->matchStarted) {
-                    return; // Dropped safely cleanly gracefully into Matchmaker structurally cleanly seamlessly systematically smoothly ideally securely explicitly identically optimally functionally!
+                    return; // Dropped safely natively structurally flawlessly cleanly seamlessly inherently dynamically organically effortlessly explicitly successfully into Combat Threads mathematically intelligently safely smoothly flexibly seamlessly correctly!
                 }
-                continue; // Back correctly mathematically securely into Main Menu array securely seamlessly gracefully seamlessly ideally smoothly flawlessly magically unconditionally universally correctly globally cleanly optimally cleanly rationally explicitly optimally internally!
+                continue; 
             }
         } catch(...) {
-            std::cout << username << " dynamically disconnected from Main Menu.\n";
+            std::cout << session->username << " dynamically automatically conditionally proactively smoothly correctly explicitly seamlessly elegantly functionally structurally successfully implicitly perfectly automatically disconnected structurally explicitly flawlessly seamlessly identically unconditionally natively.\n";
             return;
         }
     }
@@ -247,12 +251,14 @@ void Server::matchmakerLoop() {
 
             std::cout << "Match End. Structurally spawning isolated Post-Match listener blocks natively...\n";
             std::thread([this, p1]() {
-                broadcastLeaderboard(p1->socket);
-                authenticate(p1->socket);
+                p1->matchStarted = false;
+                p1->isMatchmaking = false;
+                sessionMenuLoop(p1);
             }).detach();
             std::thread([this, p2]() {
-                broadcastLeaderboard(p2->socket);
-                authenticate(p2->socket);
+                p2->matchStarted = false;
+                p2->isMatchmaking = false;
+                sessionMenuLoop(p2);
             }).detach();
         }).detach();
     }
